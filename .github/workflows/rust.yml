@@ -31,4 +31,4 @@ jobs:
         rustc --version
 
     - name: Check code
-      run: cargo clippy --features semihosting,log-integration,itm
+      run: cargo clippy --features semihosting,log-integration,log-colours,itm
