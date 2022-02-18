@@ -45,6 +45,8 @@ pub mod destination;
 pub mod printer;
 #[cfg(feature = "log-integration")]
 pub mod log;
+#[cfg(feature = "log-colours")]
+mod coloured_logs;
 
 ///Print macro that uses Printers to write formatted output
 #[macro_export]

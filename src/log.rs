@@ -49,7 +49,6 @@
 use crate::printer::Printer;
 use core::marker;
 use core::mem;
-
 ///Simple Logger implementation
 pub struct Logger<P: Printer + marker::Send + marker::Sync> {
     ///Printer implementation
@@ -69,13 +68,36 @@ impl<P: Printer + marker::Send + marker::Sync> log::Log for Logger<P> {
             let inner = &self.inner as *const P as *mut P;
             let inner = unsafe { &mut *inner };
 
-            inner.print(format_args!(
-                "{:<5} {}:{} - {}\n",
-                record.level(),
-                record.file().unwrap_or("UNKNOWN"),
-                record.line().unwrap_or(0),
-                record.args()
-            ))
+            #[cfg(feature = "log-colours")]
+            {
+                use crate::coloured_logs;
+
+                let colour_specifier = coloured_logs::get_colour(record.level());
+
+                inner.print(format_args!(
+                    "{}[{}{}{:<5}{} {}:{}{}]{} {}\n",
+                    coloured_logs::SUBTLE,
+                    coloured_logs::RESET,
+                    colour_specifier,
+                    record.level(),
+                    coloured_logs::RESET,
+                    record.file().unwrap_or("UNKNOWN"),
+                    record.line().unwrap_or(0),
+                    coloured_logs::SUBTLE,
+                    coloured_logs::RESET,
+                    record.args()
+                ));
+            }
+            #[cfg(not(feature = "log-colours"))]
+            {
+                inner.print(format_args!(
+                    "[{:<5} {}:{}] {}\n",
+                    record.level(),
+                    record.file().unwrap_or("UNKNOWN"),
+                    record.line().unwrap_or(0),
+                    record.args()
+                ))
+            }
         }
     }
 
