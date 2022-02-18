@@ -46,9 +46,9 @@
 //! ```
 //!
 //! Obviously it is UB to drop logger after that and use any of log's macros
-use core::mem;
-use core::marker;
 use crate::printer::Printer;
+use core::marker;
+use core::mem;
 
 ///Simple Logger implementation
 pub struct Logger<P: Printer + marker::Send + marker::Sync> {
@@ -69,12 +69,17 @@ impl<P: Printer + marker::Send + marker::Sync> log::Log for Logger<P> {
             let inner = &self.inner as *const P as *mut P;
             let inner = unsafe { &mut *inner };
 
-            inner.print(format_args!("{:<5} {}:{} - {}\n", record.level(), record.file().unwrap_or("UNKNOWN"), record.line().unwrap_or(0), record.args()))
+            inner.print(format_args!(
+                "{:<5} {}:{} - {}\n",
+                record.level(),
+                record.file().unwrap_or("UNKNOWN"),
+                record.line().unwrap_or(0),
+                record.args()
+            ))
         }
     }
 
-    fn flush(&self) {
-    }
+    fn flush(&self) {}
 }
 
 ///Initialize logging facilities.
@@ -94,7 +99,7 @@ pub fn init<P: Printer + marker::Send + marker::Sync>(logger: &'static Logger<P>
     }
     #[cfg(not(feature = "atomic_cas"))]
     {
-        use core::sync::atomic::{Ordering, AtomicBool};
+        use core::sync::atomic::{AtomicBool, Ordering};
         static INIT: AtomicBool = AtomicBool::new(false);
 
         let is_init = INIT.load(Ordering::Acquire);
@@ -102,11 +107,7 @@ pub fn init<P: Printer + marker::Send + marker::Sync>(logger: &'static Logger<P>
 
         match is_init {
             true => Ok(()),
-            false => {
-                unsafe {
-                    log::set_logger_racy(logger)
-                }
-            }
+            false => unsafe { log::set_logger_racy(logger) },
         }
     }
 }
